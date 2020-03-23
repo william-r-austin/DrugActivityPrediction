@@ -306,7 +306,7 @@ def tuneNaiveBayesUpdatedParams():
     for size in sizes:
         tuneNaiveBayesUpdated(size, 13)
 
-def tuneNaiveBayesIgrFeatureSize(featureSizeList, modelCount):
+def tuneNaiveBayesIgrFeatureSize(featureSizeList, modelCountList):
     X_raw, y = common.loadTrainingDataSet()
     
     reducer = InformationGainReducer()
@@ -317,51 +317,52 @@ def tuneNaiveBayesIgrFeatureSize(featureSizeList, modelCount):
         X = reducer.transform(X_raw).toarray()
         
         #print("Counter(y) = " + str(Counter(y)))
-        
-        kf = KFold(n_splits=5, random_state=42, shuffle=True)
-        splitIndex = 0
-        f1ScoreList = []
-        
-        for train_index, test_index in kf.split(X):
-            X_train, X_test = X[train_index], X[test_index]
-            y_train, y_test = y[train_index], y[test_index]
-            
-            modelList = []
-            
-            for modelNum in range(modelCount):
-                rs = 42 + modelNum
-                rus = RandomUnderSampler(random_state=rs)
-                X_model, y_model = rus.fit_resample(X_train, y_train) 
-                  
-    
+        for modelCount in modelCountList:
+            kf = KFold(n_splits=5, random_state=42, shuffle=True)
+            splitIndex = 0
+            f1ScoreList = []
                 
-                nbClassifier = NaiveBayesClassifier()
-                nbClassifier.fit(X_model, y_model)
+            for train_index, test_index in kf.split(X):
+                X_train, X_test = X[train_index], X[test_index]
+                y_train, y_test = y[train_index], y[test_index]
+                
+                modelList = []
+                
+                for modelNum in range(modelCount):
+                    rs = 42 + modelNum
+                    rus = RandomUnderSampler(random_state=rs)
+                    X_model, y_model = rus.fit_resample(X_train, y_train) 
+                      
         
-                #X_test_2 = reducer.transform(X_test).toarray()
-                #output = nbClassifier.predict(X_test_2)
-                #modelScore = f1_score(y_test, output)
-                
-                #print("Split Index = " + str(splitIndex) + ", Model Num = " + str(modelNum) + ", F1 = " + str(modelScore))
-                
-                modelList.append(nbClassifier)
-                print(".", end='')
-            print()
+                    
+                    nbClassifier = NaiveBayesClassifier()
+                    nbClassifier.fit(X_model, y_model)
             
-            combinedModelOutput = common.predictCombinedSimple(X_test, modelList)
-            combinedModelScore = f1_score(y_test, combinedModelOutput)
-            f1ScoreList.append(combinedModelScore)
-            print("Combined Model Score for split #" + str(splitIndex) + " = " + str(combinedModelScore))
-           
-            splitIndex += 1
-        
-        print("F1 Score for FR size = " + str(featureSize) + " is: " + str(mean(f1ScoreList)))
+                    #X_test_2 = reducer.transform(X_test).toarray()
+                    #output = nbClassifier.predict(X_test_2)
+                    #modelScore = f1_score(y_test, output)
+                    
+                    #print("Split Index = " + str(splitIndex) + ", Model Num = " + str(modelNum) + ", F1 = " + str(modelScore))
+                    
+                    modelList.append(nbClassifier)
+                    #print(".", end='')
+                #print()
+                
+                combinedModelOutput = common.predictCombinedSimple(X_test, modelList)
+                combinedModelScore = f1_score(y_test, combinedModelOutput)
+                f1ScoreList.append(combinedModelScore)
+                #print("Combined Model Score for split #" + str(splitIndex) + " = " + str(combinedModelScore))
+               
+                splitIndex += 1
+            
+            print("F1 Score for FR size = " + str(featureSize) + " and model count = " + str(modelCount) + " is: " + str(mean(f1ScoreList)))
 
 
 def tuneIGR():
-    sizes = [55, 105, 155, 205, 255, 305, 375, 505, 655, 805, 1005, 1305]
+    #sizes = [55, 105, 155, 205, 255, 305, 375, 505, 655, 805, 1005, 1305]
+    sizes = [1, 2, 3, 5, 7, 11, 15, 31, 47, 63, 95, 127, 191, 255, 383, 511, 767, 1023, 1535, 2047, 3071, 4095]
     
-    tuneNaiveBayesIgrFeatureSize(sizes, 13)
+    tuneNaiveBayesIgrFeatureSize([805], [7, 9, 13, 19, 27, 37])
     #for size in sizes:
     #    tuneNaiveBayesUpdated(size, 13)
     

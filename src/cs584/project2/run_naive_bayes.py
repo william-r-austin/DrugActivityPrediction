@@ -5,6 +5,7 @@ Created on Mar 7, 2020
 '''
 import cs584.project2.utilities as utilities
 import cs584.project2.constants as constants
+from cs584.project2.information_gain_reducer import InformationGainReducer 
 import cs584.project2.data_balancing as data_balancing
 import cs584.project2.feature_reduction as feature_reduction
 from cs584.project2.naive_bayes_classifier import NaiveBayesClassifier
@@ -240,12 +241,44 @@ def runWithMultiModel():
     common.writeResultsFile(combinedModelOutput)
     print("Done predicting with multi-model.")
     
+def runWithIGR(featureSize, modelCount):
+    X_raw, y = common.loadTrainingDataSet()
+    
+    reducer = InformationGainReducer()
+    reducer.fit(X_raw, y)
+    reducer.resize(featureSize)
+    X = reducer.transform(X_raw).toarray()
+    
+    modelList = []
+    
+    for modelNum in range(modelCount):
+        rs = 42 + modelNum
+        rus = RandomUnderSampler(random_state=rs)
+        X_model, y_model = rus.fit_resample(X, y) 
+        
+        nbClassifier = NaiveBayesClassifier()
+        nbClassifier.fit(X_model, y_model)
+        
+        modelList.append(nbClassifier)
+    
+    X_test_raw = common.loadTestDataSet()
+    X_test = reducer.transform(X_test_raw).toarray()
+    combinedModelOutput = common.predictCombinedSimple(X_test, modelList)
+    
+    common.writeResultsFile(combinedModelOutput)
+    print("Done predicting with multi-model and IGR.")    
+    
 if __name__ == '__main__':
-    # This has an F1 score on Miner of 0.74
-    runWithMultiModel()
+    # This has an F1 score on Miner of 0.74, 9 models used
+    # runWithMultiModel()
     
     #runWithUndersamplingMutualInfo()()
 
+    # Run with IGR, F1 Score on miner = 0.65
+    #runWithIGR(805, 13)
+    
+    print("Done")
+    
     
     #naiveBayesModel = createNaiveBayesModel(trainDrugRecords)
     
