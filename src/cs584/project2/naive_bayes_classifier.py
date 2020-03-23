@@ -97,9 +97,7 @@ class NaiveBayesClassifier(BaseEstimator):
         activeResult0 = np.multiply(inverseTestSet, self.activeProbabilities[0, :]).sum(axis = 1)
         activeResult1 = np.multiply(testSet, self.activeProbabilities[1, :]).sum(axis = 1)
         activeResultTotal = activeResult0 + activeResult1
-        
-
-        
+                
         inactiveResult0 = np.multiply(inverseTestSet, self.inactiveProbabilities[0, :]).sum(axis = 1)
         inactiveResult1 = np.multiply(testSet, self.inactiveProbabilities[1, :]).sum(axis = 1)
         inactiveResultTotal = inactiveResult0 + inactiveResult1
