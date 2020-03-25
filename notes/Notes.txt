@@ -1,0 +1,37 @@
+SMOTE for balancing datasets
+
+feature reduction
+
+
+
+
+
+Make sure to use pruning for decision trees!!
+
+
+1st submission = full set no balancing, naive bayes
+
+2nd submission =  with feature selection - 200?
+
+3rd submission = with random oversampling
+
+Submission with NN = 0.59 - 03/24.
+
+
+0. Use Sparse classes from sklearn!!
+0. Discuss NB implementation - log liklihood!!
+1a. Custom feature reduction - with Information Gain!! Seems good. (SelectKBest with mutual_info_classif is slow!!!). This can give you multiple k without recomputing data!
+ - SelectKBest with chi2 is also good.
+1. Imbalance Datasets are hard!! (Very very easy to have overconfident training and imbalanced models)
+   - Random Oversampling causes minority class instances in all parts of the data, so cross validation doesn't work!!
+   - my FeatureIndependentSampler is useless.
+   - Created custom bag of models and function to predict.
+2. Tuning Parameters is difficult.
+3. Tried to conform to the Scikit-Learn API.
+4. Other models - (would like to try KNN, SVM, ensemble models)
+
+
+
+
+
+
