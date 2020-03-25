@@ -57,8 +57,6 @@ class NaiveBayesClassifier(BaseEstimator):
         activeTraining = X[activeIndexValues,:]
         inactiveTraining = X[inactiveIndexValues,:]
         
-
-        
         self.activeByFeature = np.sum(activeTraining, axis=0)
         self.inactiveByFeature = np.sum(inactiveTraining, axis=0)
 
@@ -69,8 +67,6 @@ class NaiveBayesClassifier(BaseEstimator):
         
         self.activeProbabilities = np.zeros((2, self.featureCount), dtype=np.float64)
         self.inactiveProbabilities = np.zeros((2, self.featureCount), dtype=np.float64)
-        
-
         
         for q in range(self.featureCount):
             # Active Probabilities

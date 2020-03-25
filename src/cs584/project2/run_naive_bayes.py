@@ -270,7 +270,7 @@ def runWithIGR(featureSize, modelCount):
     
 if __name__ == '__main__':
     # This has an F1 score on Miner of 0.74, 9 models used
-    # runWithMultiModel()
+    runWithMultiModel()
     
     #runWithUndersamplingMutualInfo()()
 

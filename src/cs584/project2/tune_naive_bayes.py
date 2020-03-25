@@ -360,13 +360,112 @@ def tuneNaiveBayesIgrFeatureSize(featureSizeList, modelCountList):
 
 def tuneIGR():
     #sizes = [55, 105, 155, 205, 255, 305, 375, 505, 655, 805, 1005, 1305]
-    sizes = [1, 2, 3, 5, 7, 11, 15, 31, 47, 63, 95, 127, 191, 255, 383, 511, 767, 1023, 1535, 2047, 3071, 4095]
+    #sizes = [1, 2, 3, 5, 7, 11, 15, 31, 47, 63, 95, 127, 191, 255, 383, 511, 767, 1023, 1535, 2047, 3071, 4095]
     
     tuneNaiveBayesIgrFeatureSize([805], [7, 9, 13, 19, 27, 37])
     #for size in sizes:
     #    tuneNaiveBayesUpdated(size, 13)
     
+def tuneMultimodelIGR(featureSizes):
+    X_raw, y_raw = common.loadTrainingDataSet()
+    
+    scoreMap = dict()
+    for featureSize in featureSizes:
+        scoreMap[featureSize] = []
+        
+    kf = KFold(n_splits=5, random_state=42, shuffle=True)
+    foldNumber = 0
+
+    for train_index, test_index in kf.split(X_raw):
+        X_train, X_test = X_raw[train_index], X_raw[test_index]
+        y_train, y_test = y_raw[train_index], y_raw[test_index]
+        
+        reducer = InformationGainReducer()
+        reducer.fit(X_train, y_train)
+    
+        for featureSize in featureSizes:
+            reducer.resize(featureSize)
+            X_train_reduced = reducer.transform(X_train).toarray()
+            
+            modelList = []
+        
+            for modelNum in range(11):
+                rus_rs = 555 + modelNum
+                rus = RandomUnderSampler(random_state=rus_rs)
+                X_model, y_model = rus.fit_resample(X_train_reduced, y_train)
+                
+                nbClassifier = NaiveBayesClassifier()
+                nbClassifier.fit(X_model, y_model)
+                
+                modelList.append(nbClassifier)
+                print(".", end="")
+            
+
+            X_test_reduced = reducer.transform(X_test).toarray()
+            output = common.predictCombinedSimple(X_test_reduced, modelList)
+            combinedModelScore = f1_score(y_test, output)
+            scoreMap[featureSize].append(combinedModelScore)
+            
+            print()
+            print("Done with fold #" + str(foldNumber) + " for feature size = " + str(featureSize) + ". F1 = " + str(combinedModelScore))
+        
+        foldNumber += 1
+        
+    for featureSize in featureSizes:
+        meanF1Score = mean(scoreMap[featureSize])
+        print("F1 Score for NN with Chi2 and FR size = " + str(featureSize) + " is: " + str(meanF1Score))    
+
+
+def tuneMultimodelChi2(featureSizes):
+    X_raw, y_raw = common.loadTrainingDataSet()
+    
+    scoreMap = dict()
+    for featureSize in featureSizes:
+        scoreMap[featureSize] = []
+        
+    kf = KFold(n_splits=5, random_state=42, shuffle=True)
+    foldNumber = 0
+
+    for train_index, test_index in kf.split(X_raw):
+        X_train, X_test = X_raw[train_index], X_raw[test_index]
+        y_train, y_test = y_raw[train_index], y_raw[test_index]
+        
+        for featureSize in featureSizes:
+            reducer = SelectKBest(chi2, k=featureSize)
+            reducer.fit(X_train, y_train)
+            X_train_reduced = reducer.transform(X_train).toarray()
+            
+            modelList = []
+        
+            for modelNum in range(11):
+                rus_rs = 555 + modelNum
+                rus = RandomUnderSampler(random_state=rus_rs)
+                X_model, y_model = rus.fit_resample(X_train_reduced, y_train)
+                
+                nbClassifier = NaiveBayesClassifier()
+                nbClassifier.fit(X_model, y_model)
+                
+                modelList.append(nbClassifier)
+                print(".", end="")
+
+            X_test_reduced = reducer.transform(X_test).toarray()
+            output = common.predictCombinedSimple(X_test_reduced, modelList)
+            combinedModelScore = f1_score(y_test, output)
+            scoreMap[featureSize].append(combinedModelScore)
+            
+            print()
+            print("Done with fold #" + str(foldNumber) + " for feature size = " + str(featureSize) + ". F1 = " + str(combinedModelScore))
+        
+        foldNumber += 1
+        
+    for featureSize in featureSizes:
+        meanF1Score = mean(scoreMap[featureSize])
+        print("F1 Score for NB with Chi2 and FR size = " + str(featureSize) + " is: " + str(meanF1Score))    
+    
 if __name__ == '__main__':
+    #sizes = [55, 105, 155, 205, 255, 305, 375, 505, 655, 805, 1005, 1305]
+    sizes = [11, 15, 31, 47, 63, 95, 127, 191, 255, 383, 511, 767, 1023, 1535, 2047, 3071, 4095]
+    
     # Best submission so far
     #tuneNaiveBayesMultiModelWithSize()
     
@@ -378,9 +477,13 @@ if __name__ == '__main__':
     #reducer = InformationGainReducer()
     #reducer.fit(X, y)
     
-    tuneIGR()
+    # ??
+    # tuneIGR()
     
+    # Not amazing
+    # tuneMultimodelIGR(sizes)
     
+    tuneMultimodelChi2(sizes)
          
         
         

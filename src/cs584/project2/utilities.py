@@ -26,10 +26,14 @@ def incrementDictionaryCountByAmount(dictObject, key, amount):
     
 def incrementDictionaryCount(dictObject, key):
     incrementDictionaryCountByAmount(dictObject, key, 1)
-    
-def getSmoothedLogEstimate(numerator, denominator, alpha, classCount):
+
+def getSmoothedEstimate(numerator, denominator, alpha, classCount):
     newNumerator = numerator + alpha
     newDenominator = denominator + (alpha * classCount)
     result = Decimal(newNumerator) / Decimal(newDenominator)
-    return result.ln()
+    return result
+    
+def getSmoothedLogEstimate(numerator, denominator, alpha, classCount):
+    smoothedEstimate = getSmoothedEstimate(numerator, denominator, alpha, classCount)
+    return smoothedEstimate.ln()
         

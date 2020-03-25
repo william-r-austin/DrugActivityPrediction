@@ -18,6 +18,8 @@ from collections import Counter
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import classification_report
 from statistics import mean
+from imblearn.over_sampling import SMOTE
+from sklearn.ensemble import RandomForestClassifier
 
 def tuneBasicDecisionTree():
     # Some setup
@@ -109,7 +111,7 @@ def tuneReducedDecisionTreeWithFeatureSizeAndDepth(featureSize, depth):
     print("Mean for feature and depth of (" + str(featureSize) + ", " + str(depth) + ") = " + str(mean(f1ScoreList)))
 
 
-def tuneNaiveBayesMultiModel(featureSize):
+def tuneDecisionTreeMultiModel(featureSize):
     X, y = common.loadTrainingDataSet()
     
     #print("Counter(y) = " + str(Counter(y)))
@@ -151,6 +153,48 @@ def tuneNaiveBayesMultiModel(featureSize):
         splitIndex += 1
     
     #print("F1 Score for FR size = " + str(featureSize) + " is: " + str(mean(f1ScoreList)))
+    
+def tuneDecisionTreeSmote(featureSizes):
+    X_raw, y_raw = common.loadTrainingDataSet()
+    
+    scoreMap = dict()
+    for featureSize in featureSizes:
+        scoreMap[featureSize] = []
+        
+    kf = KFold(n_splits=5, random_state=42, shuffle=True)
+    foldNumber = 0
+
+    for train_index, test_index in kf.split(X_raw):
+        X_train, X_test = X_raw[train_index], X_raw[test_index]
+        y_train, y_test = y_raw[train_index], y_raw[test_index]
+        
+        for featureSize in featureSizes:
+            reducer = SelectKBest(chi2, k=featureSize)
+            reducer.fit(X_train, y_train)
+            X_train_reduced = reducer.transform(X_train).toarray()
+            
+            ss_rs = 42+(featureSize*foldNumber)
+            smoteSampler = SMOTE(random_state=ss_rs)
+
+            X_model, y_model = smoteSampler.fit_resample(X_train_reduced, y_train)
+                
+            dtClassifier = DecisionTreeClassifier(max_depth=10)
+            dtClassifier.fit(X_model, y_model)
+
+            X_test_reduced = reducer.transform(X_test).toarray()
+            output = dtClassifier.predict(X_test_reduced)
+            combinedModelScore = f1_score(y_test, output)
+            scoreMap[featureSize].append(combinedModelScore)
+            
+            print()
+            print("Done with DT prediction for fold #" + str(foldNumber) + " for feature size = " + str(featureSize) + ". F1 = " + str(combinedModelScore))
+        
+        foldNumber += 1
+        
+    for featureSize in featureSizes:
+        meanF1Score = mean(scoreMap[featureSize])
+        print("F1 Score for DT with Chi2 and FR size = " + str(featureSize) + " is: " + str(meanF1Score))  
+    
 
 def tuneDecisionTreeFeatureReductionSize():
     featureSizes = [1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047]
@@ -158,4 +202,7 @@ def tuneDecisionTreeFeatureReductionSize():
         tuneReducedDecisionTreeWithFeatureSizeAndDepth(featureSize, 6)
 
 if __name__ == '__main__':
-    tuneDecisionTreeFeatureReductionSize()
+    #tuneDecisionTreeFeatureReductionSize()
+    
+    sizes = [1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047]
+    tuneDecisionTreeSmote(sizes)
